@@ -69,9 +69,11 @@ class MeshGraph:
         self.number_of_faces = len(self.faces)
         self.center_of_mass = self.calculateCenterOfMass()
         self.center_vertex = self.calculateCenterVertex()
-        
+        #self.input1 =  
+        #self.input2
         #LATER ADDITIONS
-        self.distances = [math.inf] * self.number_of_vertices
+        self.distances_1 = [math.inf] * self.number_of_vertices
+        self.distances_2 = [math.inf] * self.number_of_vertices
         self.evenly_sampled_points = []
         self.com = []
         self._readModifiedFile(filePath)
@@ -174,7 +176,7 @@ class MeshGraph:
     def euclidianDistance(self, vertex1, vertex2):
         return math.sqrt((vertex1.x - vertex2.x) ** 2 + (vertex1.y - vertex2.y) ** 2 + (vertex1.z - vertex2.z) ** 2)
 
-    def shortestPath(self, from_vertex, to_vertex):
+    def shortestPath(self, from_vertex, distance_list):
         # Create a visited array to keep track of visited vertices
         visited = [False] * len(self.vertices)
         # Create a parent array to store the parent of each vertex in the shortest path
@@ -185,7 +187,7 @@ class MeshGraph:
         queue.put(from_vertex)
 
         visited[from_vertex.collection_index] = True
-        self.distances[from_vertex.collection_index] = 0
+        distance_list[from_vertex.collection_index] = 0
         while not queue.empty():
             current_vertex = queue.get()
             '''
@@ -203,9 +205,9 @@ class MeshGraph:
                     queue.put(neighbor_vertex)
                     visited[neighbor_vertex.collection_index] = True
                     parent[neighbor_vertex.collection_index] = current_vertex
-                    calc_distance = self.distances[current_vertex.collection_index] + self.euclidianDistance(current_vertex, neighbor_vertex) 
-                    if( calc_distance < self.distances[neighbor_vertex.collection_index] ):
-                        self.distances[neighbor_vertex.collection_index] = calc_distance
+                    calc_distance = distance_list[current_vertex.collection_index] + self.euclidianDistance(current_vertex, neighbor_vertex) 
+                    if( calc_distance < distance_list[neighbor_vertex.collection_index] ):
+                        distance_list[neighbor_vertex.collection_index] = calc_distance
 
         # If no path is found, return an empty list
         return []

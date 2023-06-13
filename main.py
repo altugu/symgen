@@ -23,12 +23,14 @@ def main():
     #sample_point = mesh.vertices[7000]
     #print(sample_point)
     print(mesh.vertices[int(mesh.com[0][2])])
-    mesh.shortestPath(center_point, center_point)
+    mesh.shortestPath( center_point, mesh.distances_1)
     mesh.writeFileSplit()
-    print(mesh.distances[mesh.vertices[int(mesh.com[0][2])].collection_index])
+    print(mesh.distances_1[mesh.vertices[int(mesh.com[0][2])].collection_index])
     print(len(mesh.right_samples_indices))
     print(mesh.right_samples_indices)
     print(mesh.left_samples_indices)
+
+    #ga = GA(vertices=mesh.vertices, faces=mesh.faces,right_samples=mesh.right_samples_indices, left_samples=mesh.left_samples_indices)
     # Assuming vertices and faces are populated with the required data
 
     # Perform uniform sampling with 10 samples
