@@ -23,6 +23,7 @@ class Vertex:
             x: {self.x}
             y: {self.y}
             z: {self.z}
+            involved faces: { self.involved_faces}
         """
 
         return str_return
@@ -58,7 +59,7 @@ class Face:
 
 class MeshGraph:
 
-    def __init__(self, filePath):
+    def __init__(self, filePath,input):
         self.filePath = filePath
         self.uniform_samples = {}
         self.uniform_counter = 0
@@ -69,11 +70,11 @@ class MeshGraph:
         self.number_of_faces = len(self.faces)
         self.center_of_mass = self.calculateCenterOfMass()
         self.center_vertex = self.calculateCenterVertex()
-        #self.input1 =  
-        #self.input2
+        
+        
         #LATER ADDITIONS
-        self.distances_1 = [math.inf] * self.number_of_vertices
-        self.distances_2 = [math.inf] * self.number_of_vertices
+        self.distances_1 = [math.inf] * (self.number_of_vertices+1)
+        self.distances_2 = [math.inf] * (self.number_of_vertices+1)
         self.evenly_sampled_points = []
         self.com = []
         self._readModifiedFile(filePath)
@@ -82,9 +83,11 @@ class MeshGraph:
         self.samples = []
         self.middle_vertex = self.vertices[int(self.com[0][0])]
         self.readSamplesFromFile("sampled_1.txt")
+        self.input1 =  self.vertices[input["input1"]]
+        self.input2 = self.vertices[input["input2"]]
 
         self.splitSamples()
-
+    
     def readSamplesFromFile(self,file_path):
         with open(file_path, 'r') as file:
             for line in file:
@@ -92,8 +95,27 @@ class MeshGraph:
                 self.samples.append(sample)
         
     def splitSamples(self):
-        self.left_samples_indices = [sample for sample in self.samples if self.vertices[sample].z < self.center_of_mass[2]]
-        self.right_samples_indices = [sample for sample in self.samples if self.vertices[sample].z > self.center_of_mass[2]]
+        for sample in self.samples:
+            vertex = self.vertices[sample]
+            pos = self.point_position(vertex)
+            if(pos == "Right"):
+                self.right_samples_indices.append(sample)
+            elif(pos == "Left"):
+                self.left_samples_indices.append(sample)
+
+    def point_position(self, point):
+        vector1 = [self.input2.x - self.input1.x, self.input2.z - self.input1.z]
+        vector2 = [point.x - self.input1.x, point.z - self.input1.z]
+
+      
+        cross_product = vector1[0] * vector2[1] - vector1[1] * vector2[0]
+
+        if cross_product > 0:
+            return "Left"
+        elif cross_product < 0:
+            return "Right"
+        else:
+            return "On the line"
 
     def calculateCenterVertex(self):
         min_dist = math.inf
