@@ -69,7 +69,7 @@ class MeshGraph:
         self.number_of_faces = len(self.faces)
         self.center_of_mass = self.calculateCenterOfMass()
         self.center_vertex = self.calculateCenterVertex()
-
+        
         #LATER ADDITIONS
         self.distances = [math.inf] * self.number_of_vertices
         self.evenly_sampled_points = []
