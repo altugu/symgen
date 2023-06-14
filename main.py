@@ -23,17 +23,14 @@ def main():
     input = (5158,11573)
     mesh = MeshGraph(fileName, input)
     error_functions = [
-        GA.squared_error,
+        GA.absolute_error,
         GA.relative_error,
-        # GA.relative_squared_error
+        GA.squared_error,
+        GA.relative_squared_error
     ]
-    max_generations = [
-        1000,
-        2000,
-        3000,
-        5000,
-        8000
-    ]
+    max_generations = {
+        800
+    }
 
     for max_generation in max_generations:
         for error_function in error_functions:

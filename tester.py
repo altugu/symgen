@@ -31,7 +31,7 @@ class Tester:
                           f'MAX_GEN: {test.max_generation}  -  '
                           f'Z_VALUE_TH: {test.errors_z_value_threshold}  -  '
                           f'ERROR_FUNC: {test.error_function.__name__}\n'
-                          f'AVR_TIME: {test.time_passed}s')
+                          f'AVR_TIME: {test.time_passed}ms')
                          )
             plt.grid(True)
             plt.show()

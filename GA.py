@@ -61,15 +61,20 @@ class GA:
         self.test.fitness_results.append(fitness_scores)
 
         print(self.detected_symmetry_count)
+
     def crossover(self, index):
-        pass
-    def mutation(self, index, prob):
-        cand_vertex_index = random.randint(0, self.population_size-1)
+        rand_index = random.randint(0, len(self.right_samples_indices) - 1)
+        self.next_generation[index] = self.right_samples_indices[rand_index]
+        self.next_generation[rand_index] = self.right_samples_indices[index]
+
+    def mutation(self, index):
+
+        cand_vertex_index = random.randint(0, self.population_size - 1)
         self.next_generation[index] = cand_vertex_index
-        if prob > self.mutation_prob_threshold:
-            while self.point_position(self.vertices[cand_vertex_index]) != "Right":
-                cand_vertex_index = random.randint(0, self.population_size-1)
-                self.next_generation[index] = cand_vertex_index
+        while self.point_position(self.vertices[cand_vertex_index]) != "Right":
+            cand_vertex_index = random.randint(0, self.population_size - 1)
+            self.next_generation[index] = cand_vertex_index
+
     def normalize_errors(self, errors):
         threshold = self.errors_z_value_threshold  # Adjust the threshold as needed
 
@@ -93,6 +98,7 @@ class GA:
         error = self.error_function(self, self.distances_1[right], self.distances_1[left]) + self.error_function(
             self, self.distances_2[right], self.distances_2[left])
         return error
+
     def evaluateFitnessScore(self, normalized_errors):
 
         fitness_score = 0
@@ -102,9 +108,11 @@ class GA:
             if norm_error < 0.001 and self.point_position(self.vertices[related_pair[1]]) == "Right":
                 self.isPaired[index] = True
                 self.detected_symmetry_count += 1
-            else:
-                self.mutation(index, prob)  # to be changed # to be changed
+            elif prob > self.mutation_prob_threshold:
+                self.mutation(index)  # to be changed # to be changed
                 fitness_score += norm_error
+            else:
+                self.crossover(index)
         return fitness_score
 
     def getPairs(self):
