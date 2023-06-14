@@ -22,6 +22,7 @@ def main():
     fileName = "1.off"
     input = (5158,11573)
     mesh = MeshGraph(fileName, input)
+    print(mesh.input1_vertex, mesh.input2_vertex)
     error_functions = [
         GA.absolute_error,
         GA.relative_error,

@@ -57,22 +57,22 @@ class GA:
             normalized_errors = self.normalize_errors(errors)
             fitness_score = self.evaluateFitnessScore(normalized_errors)
             fitness_scores.append(fitness_score)
+            print(f"generation:{GENERATION+1} fitness_score: {fitness_score}")
 
         self.test.fitness_results.append(fitness_scores)
 
         print(self.detected_symmetry_count)
 
     def crossover(self, index):
-        rand_index = random.randint(0, len(self.right_samples_indices) - 1)
+        rand_index = random.randint(0,len(self.right_samples_indices)-1)
         self.next_generation[index] = self.right_samples_indices[rand_index]
         self.next_generation[rand_index] = self.right_samples_indices[index]
-
     def mutation(self, index):
 
-        cand_vertex_index = random.randint(0, self.population_size - 1)
+        cand_vertex_index = random.randint(0, self.population_size-1)
         self.next_generation[index] = cand_vertex_index
         while self.point_position(self.vertices[cand_vertex_index]) != "Right":
-            cand_vertex_index = random.randint(0, self.population_size - 1)
+            cand_vertex_index = random.randint(0, self.population_size-1)
             self.next_generation[index] = cand_vertex_index
 
     def normalize_errors(self, errors):
@@ -110,7 +110,11 @@ class GA:
                 self.detected_symmetry_count += 1
             elif prob > self.mutation_prob_threshold:
                 self.mutation(index)  # to be changed # to be changed
+            elif prob > self.mutation_prob_threshold:
+                self.mutation(index)  # to be changed # to be changed
                 fitness_score += norm_error
+            else:
+                self.crossover(index)
             else:
                 self.crossover(index)
         return fitness_score
