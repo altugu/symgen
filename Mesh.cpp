@@ -77,7 +77,7 @@ void Mesh::findNearestMeshtoCom(bool brushVertex, Color color){
 	}
 }
 void Mesh::outputWithBrush(){
-
+	
 	ifstream originalFile(fileName);
 	ofstream modifiedFile("modified_"+fileName);
 
@@ -111,7 +111,7 @@ void Mesh::outputWithBrush(){
 	} else{
 		cout << "unable to open outputFile (outputWithBrush)";
 	}
-
+	
 }
 void Mesh::loadObj(char* meshFile)
 {

@@ -1,11 +1,12 @@
 from matplotlib import pyplot as plt
 
 import time
-
+import os
 
 class Tester:
     tests = []
     tests_time_result = []
+    rootPath = None
 
     def addTest(self, test):
         self.tests.append(test)
@@ -15,14 +16,20 @@ class Tester:
             return
         for test in self.tests:
             # Calculate the average for each index
-            print(test.fitness_results)
+            #print(test.fitness_results)
             transposed_results = list(map(list, zip(*test.fitness_results)))
+
             averages = [sum(values) / len(test.fitness_results) for values in transposed_results]
             test.average_results = averages
 
         for index, test in enumerate(self.tests):
             averages = test.average_results
             indices = list(range(len(test.average_results)))
+            # Set the desired figure size
+            fig_size = (8, 6)  # Width, Height in inches
+
+# Create a new figure with the specified size
+            plt.figure(figsize=fig_size)
             plt.plot(indices, averages, marker='o')
             plt.xlabel('Generation')
             plt.ylabel('Fitness Score')
@@ -31,10 +38,29 @@ class Tester:
                           f'MAX_GEN: {test.max_generation}  -  '
                           f'Z_VALUE_TH: {test.errors_z_value_threshold}  -  '
                           f'ERROR_FUNC: {test.error_function.__name__}\n'
-                          f'AVR_TIME: {test.time_passed}ms')
-                         )
+                          f'TOTAL_TIME: {test.time_passed}ms  '
+                         ))
             plt.grid(True)
-            plt.show()
+            
+            self.rootPath = "models/mesh023.off"
+
+            directory = os.path.basename(self.rootPath)
+
+            save_directory = f"test_results/{directory[:-4]}"
+
+            if not os.path.exists(save_directory):
+                print("Path does not exist. Creating one...")
+                os.makedirs(save_directory)
+
+            save_file_path = os.path.join(save_directory, f"{index}.png")
+
+            if not os.path.exists(save_file_path):
+                print("File does not exist. Creating one...")
+                with open(save_file_path, 'w+') as file:
+                    pass  # Create an empty file
+
+            plt.savefig(save_directory)
+            #plt.show()
 
 
 class Test:
@@ -43,7 +69,6 @@ class Test:
     time_passed = 0  # ms
     fitness_results = []
     average_results = []
-
     def __init__(self,
                  error_function,
                  max_generation,

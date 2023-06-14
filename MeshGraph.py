@@ -2,7 +2,7 @@ import numpy as np
 import random
 import math
 from queue import Queue
-
+import os
 
 def compare_with_margin(value1, value2, margin_percentage):
     margin = margin_percentage / 100 * value1
@@ -331,7 +331,10 @@ class MeshGraph:
                 added_str += '\n'
             last_string += added_str
 
-        with open(fileName, "w") as file:
+        file_dir = f'output_files/{fileName}'
+        if not os.path.exists(os.path.dirname(file_dir)):
+            os.makedirs(os.path.dirname(file_dir))  
+        with open(file_dir, "w+") as file:
             file.write(last_string)
             file.truncate()
 

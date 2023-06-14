@@ -4,6 +4,7 @@ from MeshGraph import *
 import matplotlib.pyplot as plt
 import statistics
 from tester import Tester, Test
+import time
 
 class GA:
     target = []
@@ -13,7 +14,8 @@ class GA:
                  max_generation=1000,
                  mutation_prob_threshold=0.1,
                  errors_z_value_threshold=2.7,
-                 tester=None
+                 tester=None,
+                 fitness_break = None
                  ):
         self.tester = tester
         self.test = Test(
@@ -32,7 +34,7 @@ class GA:
         self.error_function = error_function
         self.distances_1 = mesh.distances_1
         self.distances_2 = mesh.distances_2
-
+        
         self.detected_symmetry_count = 0
         self.next_generation = mesh.right_samples_indices
         self.max_generation = max_generation  # any value
@@ -40,11 +42,37 @@ class GA:
         self.fixed_point1 = mesh.input1_vertex
         self.fixed_point2 = mesh.input2_vertex
         print("GA")
-        self.test.start_time()
-        self._geneticAlgorithm()
-        self.test.end_time()
-        self.tester.addTest(self.test)
+        self.fitness_break = fitness_break
+        if(self.fitness_break == "BREAK"):
+            self.test.start_time()
+            self._geneticAlgorithm2()
+            self.test.end_time()
+            self.tester.addTest(self.test)
 
+        else:   
+            self.test.start_time()
+            self._geneticAlgorithm()
+            self.test.end_time()
+            self.tester.addTest(self.test)
+    def _geneticAlgorithm2(self):
+        fitness_scores = []
+        flag = True
+        for GENERATION in range(self.max_generation):
+            self.right_samples_indices = self.next_generation
+            errors = []
+            for index, (left, right) in enumerate(zip(self.left_samples_indices, self.right_samples_indices)):
+                if self.isPaired[index]:
+                    continue
+                errors.append(self.evaluateErrors(right, left))
+            normalized_errors = self.normalize_errors(errors)
+            fitness_score = self.evaluateFitnessScore(normalized_errors)
+            fitness_scores.append(fitness_score)
+
+            print(f"generation:{GENERATION+1} fitness_score: {fitness_score}")
+
+        self.test.fitness_results.append(fitness_scores)
+
+        print(self.detected_symmetry_count)
     def _geneticAlgorithm(self):
         fitness_scores = []
         for GENERATION in range(self.max_generation):
@@ -110,13 +138,12 @@ class GA:
                 self.detected_symmetry_count += 1
             elif prob > self.mutation_prob_threshold:
                 self.mutation(index)  # to be changed # to be changed
-            elif prob > self.mutation_prob_threshold:
-                self.mutation(index)  # to be changed # to be changed
                 fitness_score += norm_error
             else:
                 self.crossover(index)
-            else:
-                self.crossover(index)
+                fitness_score += norm_error
+
+
         return fitness_score
 
     def getPairs(self):
