@@ -32,7 +32,8 @@ class Vertex:
 
 
 class Face:
-    def __init__(self, vertice_1, vertice_2, vertice_3, index, color):
+    color = None
+    def __init__(self, vertice_1, vertice_2, vertice_3, index):
         self.vertice_1 = vertice_1
         self.vertice_2 = vertice_2
         self.vertice_3 = vertice_3
@@ -40,7 +41,7 @@ class Face:
         self.neighbour12 = None
         self.neighbour13 = None
         self.neighbour23 = None
-        self.color = color
+    
 
     def __str__(self):
         str_return = f"""
@@ -80,7 +81,7 @@ class MeshGraph:
         self.right_samples_indices = []
         self.left_samples_indices = []
         self.samples = []
-        self.middle_vertex = self.vertices[int(self.com[0][0])]
+        #self.middle_vertex = self.vertices[int(self.com[0][0])]
         self.readSamplesFromFile("sampled_1.txt")
         self.input1 =  self.vertices[input["input1"]]
         self.input2 = self.vertices[input["input2"]]
@@ -333,7 +334,7 @@ class MeshGraph:
                         color = vertice_index_lst[3:]
 
 
-                    face = Face(vertice_1, vertice_2, vertice_3, face_index, color)
+                    face = Face(vertice_1, vertice_2, vertice_3, face_index)
 
                     vertice_1.addInvolvedFace(face)
                     vertice_2.addInvolvedFace(face)
@@ -344,7 +345,38 @@ class MeshGraph:
                     self.faces.insert(face_index, face)
 
                     face_index += 1
+    def meshToFile(self, fileName):
+        last_string = (
+            'OFF\n'
+            '12500 24998 0\n'
+        )
 
+        for vertex in self.vertices:
+            added_str = f'{vertex.x} {vertex.y} {vertex.z}\n'
+            last_string += added_str
+        for face in self.faces:
+            added_str = (f'3 {face.vertice_1.collection_index} {face.vertice_2.collection_index} {face.vertice_3.collection_index}')
+            if face.color != None:
+                added_str += f' {int(face.color[0])} {int(face.color[1])} ' \
+                             f'{int(face.color[2])}\n'
+            else:
+                added_str += '\n'
+            last_string += added_str
+
+        with open(fileName, "w") as file:
+            file.write(last_string)
+            file.truncate()
+
+    def brushPair(self, pairs):
+        for pair in pairs:
+            v1,v2 = self.vertices[pair[0]],self.vertices[ pair[1]]
+            color = (random.randint(0,128), random.randint(128,256), random.randint(0,256))
+            for face in v1.involved_faces:
+                face.color = color            
+            for face in v2.involved_faces:
+                face.color = color
+
+            
     def get_neighbor_indices(self, vertex):
 
         neighbor_indices = []

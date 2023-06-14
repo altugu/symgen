@@ -21,16 +21,12 @@ def main():
              "input2": 11573}
     mesh = MeshGraph(fileName, input)
 
-    center_point = mesh.vertices[int(mesh.com[0][0])]
-    print(center_point.x, center_point.y, center_point.z)
     #sample_point = mesh.vertices[7000]
     # print(sample_point)
-    print(mesh.vertices[int(mesh.com[0][2])])
     mesh.shortestPath(mesh.input1, mesh.distances_1)
     mesh.shortestPath(mesh.input2, mesh.distances_2)
     # mesh.writeFileSplit()
-    print(mesh.distances_1[mesh.vertices[int(
-        mesh.com[0][2])].collection_index])
+
 
     size = len(mesh.right_samples_indices)
     if len(mesh.left_samples_indices) < size:
@@ -61,6 +57,8 @@ def main():
         delta = 0.01
         print(f"((x0<{vertex1.x + delta})&& (x0>{vertex1.x - delta})&&(y0<{vertex1.y + delta})&&(y0>{vertex1.y - delta})&&(z0<{vertex1.z + delta})&&(z0>{vertex1.z - delta}))||((x0<{vertex2.x + delta})&& (x0>{vertex2.x - delta})&&(y0<{vertex2.y + delta})&&(y0>{vertex2.y - delta})&&(z0<{vertex2.z + delta})&&(z0>{vertex2.z - delta}))")
         print(dashLine)
+    mesh.brushPair(pairs)
+    mesh.meshToFile("mesh63_paired.off")
     #left_vertex = mesh.vertices[pairs[1][0]]
     #right_vertex = mesh.vertices[pairs[1][1]]
     #print(left_vertex, right_vertex)
