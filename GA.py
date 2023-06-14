@@ -40,7 +40,9 @@ class GA:
         self.fixed_point1 = mesh.input1_vertex
         self.fixed_point2 = mesh.input2_vertex
         print("GA")
+        self.test.start_time()
         self._geneticAlgorithm()
+        self.test.end_time()
         self.tester.addTest(self.test)
 
     def _geneticAlgorithm(self):
@@ -59,14 +61,6 @@ class GA:
         self.test.fitness_results.append(fitness_scores)
 
         print(self.detected_symmetry_count)
-
-        indices = list(range(self.max_generation))
-        plt.plot(indices, fitness_scores, marker='o')
-        plt.xlabel('Generation')
-        plt.ylabel('Fitness Score')
-        plt.title('Fitness Score vs. Generation')
-        plt.grid(True)
-        plt.show()
     def crossover(self, index):
         pass
     def mutation(self, index, prob):
@@ -84,10 +78,15 @@ class GA:
 
         filtered_errors = [error for error in errors if abs((error - mean) / std_dev) <= threshold]
 
-        print(len(filtered_errors))
-        min_val = min(filtered_errors)
-        max_val = max(filtered_errors)
-        normalized_errors = [(error - min_val) / (max_val - min_val) for error in filtered_errors]
+        if len(filtered_errors) == 0:
+            min_val = min(errors)
+            max_val = max(errors)
+            normalized_errors = [(error - min_val) / (max_val - min_val) for error in errors]
+        else:
+            min_val = min(filtered_errors)
+            max_val = max(filtered_errors)
+            normalized_errors = [(error - min_val) / (max_val - min_val) for error in filtered_errors]
+
 
         return normalized_errors
     def evaluateErrors(self, right, left):

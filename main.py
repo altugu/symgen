@@ -24,23 +24,30 @@ def main():
     mesh = MeshGraph(fileName, input)
     error_functions = [
         GA.squared_error,
-        GA.absolute_error,
         GA.relative_error,
-        GA.relative_squared_error
+        # GA.relative_squared_error
+    ]
+    max_generations = [
+        1000,
+        2000,
+        3000,
+        5000,
+        8000
     ]
 
-    for error_function in error_functions:
-        print(f"error function: {error_function.__name__}")
-        ga = GA(mesh=mesh,
-                error_function=error_function,
-                max_generation=1000,
-                mutation_prob_threshold=0.1,
-                errors_z_value_threshold=3.0,
-                tester=tester
-                )
-        pairs = ga.getPairs()
-        mesh.brushPair(pairs)
-        mesh.meshToFile(f"1_{error_function.__name__}.off")
+    for max_generation in max_generations:
+        for error_function in error_functions:
+            print(f"error function: {error_function.__name__}")
+            ga = GA(mesh=mesh,
+                    error_function=error_function,
+                    max_generation=max_generation,
+                    mutation_prob_threshold=0.1,
+                    errors_z_value_threshold=3.0,
+                    tester=tester
+                    )
+            pairs = ga.getPairs()
+            mesh.brushPair(pairs)
+            mesh.meshToFile(f"1_{error_function.__name__}.off")
 
     tester.show_results()
 

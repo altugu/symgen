@@ -1,8 +1,11 @@
 from matplotlib import pyplot as plt
 
-class Tester:
+import time
 
+
+class Tester:
     tests = []
+    tests_time_result = []
 
     def addTest(self, test):
         self.tests.append(test)
@@ -17,22 +20,29 @@ class Tester:
             averages = [sum(values) / len(test.fitness_results) for values in transposed_results]
             test.average_results = averages
 
-        for test in self.tests:
-
+        for index, test in enumerate(self.tests):
             averages = test.average_results
             indices = list(range(len(test.average_results)))
             plt.plot(indices, averages, marker='o')
             plt.xlabel('Generation')
             plt.ylabel('Fitness Score')
-            plt.title('Fitness Score vs. Generation')
+            plt.title(f'Genetic Algorithm - {index}')
+            plt.suptitle((''
+                          f'MAX_GEN: {test.max_generation}  -  '
+                          f'Z_VALUE_TH: {test.errors_z_value_threshold}  -  '
+                          f'ERROR_FUNC: {test.error_function.__name__}\n'
+                          f'AVR_TIME: {test.time_passed}s')
+                         )
             plt.grid(True)
             plt.show()
 
 
-
-
-
 class Test:
+    start_time = 0  # s
+    end_time = 0  # s
+    time_passed = 0  # ms
+    fitness_results = []
+    average_results = []
 
     def __init__(self,
                  error_function,
@@ -44,6 +54,10 @@ class Test:
         self.max_generation = max_generation
         self.mutation_prob_threshold = mutation_prob_threshold
         self.errors_z_value_threshold = errors_z_value_threshold
-        self.fitness_results = []
-        self.average_results = []
 
+    def start_time(self):
+        self.start_time = time.time()
+
+    def end_time(self):
+        self.end_time = time.time()
+        self.time_passed = round((self.end_time - self.start_time) * 1000, 4)
