@@ -2,6 +2,7 @@ import numpy as np
 import random
 import math
 from queue import Queue
+import json
 
 print_flag = 0
 
@@ -112,11 +113,20 @@ class Edge:
     def getInvolvedFacesPair(self):
         return self.involved_faces_pair
 
+    def to_dict(self):
+        return {
+            'key': self.key,
+            'vertex_pair': [v.to_dict() for v in self.vertex_pair],
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
 
 class Face:
     neighbor_faces_triple = []
     edge_triple = []
-    color = (0, 0, 0)
+    color = -1
 
     def __init__(self, vertex_1, vertex_2, vertex_3, key):
         self.key = key
@@ -155,6 +165,16 @@ class Face:
 
     def setColor(self, color): self.color = color
 
+
+    def to_dict(self):
+        return {
+            'key': self.key,
+            'vertex_triple': [v.to_dict() for v in self.vertex_triple],
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
 class MeshGraph:
     vertices = []
     faces = {}
@@ -165,6 +185,7 @@ class MeshGraph:
         print("starting reading of file...")
         self._readFromFile(filePath)
         self.number_of_vertices = len(self.vertices)
+        self.number_of_edges = len(self.edges)
         self.number_of_faces = len(self.faces)
 
         # LATER ADDITIONS
@@ -324,16 +345,23 @@ class MeshGraph:
 
             # vertice
             if len(meshInfo) == 3:
+                print("Construction vertices...")
                 self._add_vertice_from_meshInfo(meshInfo, vertex_index)
-            
+                print("Construction vertices end!")
             # face and edges
-            elif len(meshInfo) == 4:
+            else:
+                print("Construction face, edges and involves...")
                 self._add_face_edge_and_other_op(meshInfo)
-
+                print("Construction face, edges and involes end!")
 
     def _add_face_edge_and_other_op(self, meshInfo):
-
-        vertex_index_lst = [int(i) for i in meshInfo[1:]]
+        color = -1
+        if len(meshInfo) == 7:
+            lst = [int(i) for i in meshInfo[1:]]
+            color = tuple(lst[-3:])
+            vertex_index_lst = lst[1:-3]
+        elif len(meshInfo) == 4:
+            vertex_index_lst = [int(i) for i in meshInfo[1:]]
 
         vertex_1 = self.vertices[vertex_index_lst[0]]
         vertex_2 = self.vertices[vertex_index_lst[1]]
@@ -356,6 +384,8 @@ class MeshGraph:
         face = self.add_face(vertex_1, vertex_2, vertex_3)
         # add edges to face
         face.setEdges((edge12, edge13, edge23))
+        if color != -1:
+            face.color = color
         # add face to edge
         edge12.addInvolvedFace(face)
         edge13.addInvolvedFace(face)
@@ -404,10 +434,11 @@ class MeshGraph:
     def add_edge(self, vertex_1, vertex_2):
         key = self.get_edge_key(vertex_1, vertex_2)
         if key not in self.edges:
-            tprint("edge_add")
+            print("edge added...")
             edge = Edge(vertex_1, vertex_2, key)
             self.edges[key] = edge
             return edge
+        print("edge grabbed...")
         return self.edges[key]
         # Perform any additional operations you need for adding an edge
 
@@ -445,3 +476,61 @@ class MeshGraph:
 
         with open(self.filePath[:-4] + "_modified.off", "w") as meshFile:
             meshFile.write("".join(last_mesh_lines))
+
+    def meshToFile(self, fileName):
+        last_string = (
+            'OFF\n'
+            f'{self.number_of_vertices} {self.number_of_faces} {self.number_of_edges}\n'
+        )
+
+        for vertex in self.vertices:
+            added_str = f'{vertex.x} {vertex.y} {vertex.z}\n'
+            last_string += added_str
+        for face in list(self.faces.values()):
+            added_str = (f'3 {face.vertex_triple[0].collection_index} '
+                         f'{face.vertex_triple[1].collection_index} '
+                         f'{face.vertex_triple[2].collection_index}')
+            if face.color != -1:
+                added_str += f' {int(face.color[0])} {int(face.color[1])} ' \
+                             f'{int(face.color[2])}\n'
+            else:
+                added_str += '\n'
+            last_string += added_str
+
+        with open(fileName, "w") as file:
+            file.write(last_string)
+            file.truncate()
+
+    def to_dict(self):
+        return {
+            'vertices': [v.to_dict() for v in self.vertices],
+            'edges': [e.to_dict() for e in self.edges.values()],
+            'faces': [f.to_dict() for f in self.faces.values()],
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    def save_to_json(self, filename):
+        with open(filename, 'w') as file:
+            json.dump(self.to_dict(), file)
+
+    @classmethod
+    def from_dict(cls, data):
+        mesh_graph = cls.__new__(cls)
+        mesh_graph.vertices = [Vertex(**v) for v in data['vertices']]
+        mesh_graph.edges = {e['key']: Edge(Vertex(**v[0]), Vertex(**v[1]), e['key']) for e in data['edges']}
+        mesh_graph.faces = {f['key']: Face(*[Vertex(**v) for v in f['vertex_triple']], f['key']) for f in data['faces']}
+        return mesh_graph
+
+    @classmethod
+    def from_json(cls, json_str):
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+
+    @classmethod
+    def load_from_json(cls, filename):
+        with open(filename, 'r') as file:
+            data = json.load(file)
+        return cls.from_dict(data)
+

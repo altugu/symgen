@@ -42,6 +42,7 @@ def main():
     fileName = "1.off"
     mesh = MeshGraph(fileName)
     printForMesh(mesh)
+    mesh.meshToFile("MERT.off")
 
 
 
