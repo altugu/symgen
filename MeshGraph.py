@@ -23,7 +23,6 @@ class Vertex:
             x: {self.x}
             y: {self.y}
             z: {self.z}
-            involved faces: { self.involved_faces}
         """
 
         return str_return
@@ -104,6 +103,14 @@ class MeshGraph:
                 self.left_samples_indices.append(sample)
 
     def point_position(self, point):
+        if(point.z < self.input1.z and point.z < self.input2.z ):
+            return "Left"
+        elif (point.z > self.input1.z and point.z > self.input2.z ):
+            return "Right"
+        else:
+            return "On the Rectangle"
+        #Below code for line seperation
+        '''
         vector1 = [self.input2.x - self.input1.x, self.input2.z - self.input1.z]
         vector2 = [point.x - self.input1.x, point.z - self.input1.z]
 
@@ -116,7 +123,7 @@ class MeshGraph:
             return "Right"
         else:
             return "On the line"
-
+        '''
     def calculateCenterVertex(self):
         min_dist = math.inf
         min_vertex_index = None

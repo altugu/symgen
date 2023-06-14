@@ -39,7 +39,7 @@ int main(int argc, char ** argv)
     sample_mesh->loadOff(file_name, Load_option::withoutColor);
     sample_mesh->computeCenterOfMass();
     sample_mesh->findNearestMeshtoCom(true, Color(255,0,0));
-    sample_mesh->computeEvenlySpacedSamples(100, false, Color(0, 255, 0));
+    sample_mesh->computeEvenlySpacedSamples(200, false, Color(0, 255, 0));
     sample_mesh->outputWithBrush();
     
     writeSamplesToFile(sample_mesh);

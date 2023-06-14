@@ -23,10 +23,16 @@ class GA:
         self.geneticAlgorithm()
 
     def point_position(self, point):
-        
-        vector1 = [self.fixed_point2.x - self.fixed_point1.x, self.fixed_point2.z - self.fixed_point1.z]
-        vector2 = [point.x - self.fixed_point1.x, point.z - self.fixed_point1.z]
-
+        if(point.z < self.fixed_point1.z and point.z < self.fixed_point2.z ):
+            return "Left"
+        elif (point.z > self.fixed_point1.z and point.z > self.fixed_point2.z ):
+            return "Right"
+        else:
+            return "On the Rectangle"
+        #Below code for line seperation
+        '''
+        vector1 = [self.input2.x - self.input1.x, self.input2.z - self.input1.z]
+        vector2 = [point.x - self.input1.x, point.z - self.input1.z]
 
       
         cross_product = vector1[0] * vector2[1] - vector1[1] * vector2[0]
@@ -37,6 +43,7 @@ class GA:
             return "Right"
         else:
             return "On the line"
+        '''
 
     def absolute_error(self, distance1, distance2):
 
@@ -61,7 +68,9 @@ class GA:
         error = self.error_function(self, self.distances_1[right], self.distances_1[left]) + self.error_function(
             self, self.distances_2[right], self.distances_2[left])
         prob = random.random()
-        if(error < 0.00001  ):
+        #print(str(right) + " :")
+        #print(self.vertices[right] )
+        if(error < 0.0001 and self.point_position(self.vertices[right]) == "Right"):
             self.isPaired[index] = True
             self.detected_symmetry_count += 1
         else:
