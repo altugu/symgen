@@ -12,6 +12,7 @@ def compare_with_margin(value1, value2, margin_percentage):
 
 class Vertex:
 
+
     def __init__(self, x, y, z, index):
         self.x, self.y, self.z = x, y, z
         self.collection_index = index
@@ -30,87 +31,92 @@ class Vertex:
     def addInvolvedFace(self, face):
         self.involved_faces.append(face)
 
-
 class Face:
     color = None
+
     def __init__(self, vertice_1, vertice_2, vertice_3, index):
-        self.vertice_1 = vertice_1
-        self.vertice_2 = vertice_2
-        self.vertice_3 = vertice_3
+        self.vertex_1 = vertice_1
+        self.vertex_2 = vertice_2
+        self.vertex_3 = vertice_3
         self.collection_index = index
         self.neighbour12 = None
         self.neighbour13 = None
         self.neighbour23 = None
-    
 
     def __str__(self):
         str_return = f"""
             FACE_INDEX:{self.collection_index}\n\n
-            vertice_1:\n    {self.vertice_1} 
-            vertice_2:\n    {self.vertice_2} 
-            vertice_3:\n    {self.vertice_3} 
+            vertice_1:\n    {self.vertex_1} 
+            vertice_2:\n    {self.vertex_2} 
+            vertice_3:\n    {self.vertex_3} 
             color:\n    {self.color}
         """
         return str_return
 
     def toTuple(self):
-        return self.vertice_1.index, self.vertice_2.index, self.vertice_3.index
+        return self.vertex_1.index, self.vertex_2.index, self.vertex_3.index
 
 
 class MeshGraph:
+    vertices = []
+    n_vertices = 0
 
-    def __init__(self, filePath,input):
+    faces = []
+    n_faces = 0
+
+    n_edges = 0
+
+    input1_vertex = None
+    input2_vertex = None
+    com = []
+    evenly_sampled_points = []
+
+    right_samples_indices = []
+    left_samples_indices = []
+    samples = []
+
+    def __init__(self, filePath, input, withColor=False):
+        self.withColor = withColor
         self.filePath = filePath
-        self.uniform_samples = {}
-        self.uniform_counter = 0
-        self.vertices = []
-        self.faces = []
         self._readFromFile(filePath)
-        self.number_of_vertices = len(self.vertices)
-        self.number_of_faces = len(self.faces)
-        self.center_of_mass = self.calculateCenterOfMass()
-        self.center_vertex = self.calculateCenterVertex()
-        
-        
-        #LATER ADDITIONS
-        self.distances_1 = [math.inf] * (self.number_of_vertices+1)
-        self.distances_2 = [math.inf] * (self.number_of_vertices+1)
-        self.evenly_sampled_points = []
-        self.com = []
-        self._readModifiedFile(filePath)
-        self.right_samples_indices = []
-        self.left_samples_indices = []
-        self.samples = []
-        #self.middle_vertex = self.vertices[int(self.com[0][0])]
-        self.readSamplesFromFile("sampled_1.txt")
-        self.input1 =  self.vertices[input["input1"]]
-        self.input2 = self.vertices[input["input2"]]
 
+        # LATER ADDITIONS
+        self.input1_vertex = self.vertices[input[0]]
+        self.input2_vertex = self.vertices[input[1]]
+        self.distances_1 = [math.inf] * (self.n_vertices + 1)
+        self.distances_2 = [math.inf] * (self.n_vertices + 1)
+        self.shortestPath(self.input1_vertex, self.distances_1)
+        self.shortestPath(self.input2_vertex, self.distances_2)
+
+        self._readModifiedFile(filePath)
+
+        # self.middle_vertex = self.vertices[int(self.com[0][0])]
+        self.readSamplesFromFile("sampled_1.txt")
         self.splitSamples()
-    
-    def readSamplesFromFile(self,file_path):
-        with open(file_path, 'r') as file:
-            for line in file:
-                sample = int(line.strip())
-                self.samples.append(sample)
-        
+
+        right_sample_size = len(self.right_samples_indices)
+        if len(self.left_samples_indices) < right_sample_size:
+            self.left_samples_indices += [0] * (right_sample_size - len(self.left_samples_indices))
+        else:
+            self.left_samples_indices = self.left_samples_indices[:right_sample_size]
+
     def splitSamples(self):
         for sample in self.samples:
             vertex = self.vertices[sample]
             pos = self.point_position(vertex)
-            if(pos == "Right"):
+            if (pos == "Right"):
                 self.right_samples_indices.append(sample)
-            elif(pos == "Left"):
+            elif (pos == "Left"):
                 self.left_samples_indices.append(sample)
 
     def point_position(self, point):
-        if(point.z < self.input1.z and point.z < self.input2.z ):
+        if point.z < self.input1_vertex.z and point.z < self.input2_vertex.z:
             return "Left"
-        elif (point.z > self.input1.z and point.z > self.input2.z ):
+        elif point.z > self.input1_vertex.z and point.z > self.input2_vertex.z:
             return "Right"
         else:
             return "On the Rectangle"
-        #Below code for line seperation
+        # Below code for line seperation
         '''
         vector1 = [self.input2.x - self.input1.x, self.input2.z - self.input1.z]
         vector2 = [point.x - self.input1.x, point.z - self.input1.z]
@@ -125,51 +131,6 @@ class MeshGraph:
         else:
             return "On the line"
         '''
-    def calculateCenterVertex(self):
-        min_dist = math.inf
-        min_vertex_index = None
-        for index_vertex, vertex in enumerate(self.vertices):
-            sum_sqr = math.pow(vertex.x - self.center_of_mass[0], 2)\
-                      + math.pow(vertex.y - self.center_of_mass[1],2)\
-                      + math.pow(vertex.z - self.center_of_mass[2], 2)
-            dist = math.sqrt(sum_sqr)
-            if dist < min_dist:
-                min_dist = dist
-                min_vertex_index = index_vertex
-
-        return min_vertex_index
-
-    def calculateCenterOfMass(self):
-
-        sum_x = 0
-        sum_y = 0
-        sum_z = 0
-        for vertex in self.vertices:
-            sum_x += vertex.x
-            sum_y += vertex.y
-            sum_z += vertex.z
-
-        avr_x = sum_x / self.number_of_vertices
-        avr_y = sum_y / self.number_of_vertices
-        avr_z = sum_z / self.number_of_vertices
-
-        return avr_x, avr_y, avr_z
-
-    def uniform_sampling(self, num_samples, key):
-        # Create a sampling pool
-        sampling_pool = []
-
-        # Add indices of all faces to the sampling pool
-        for vertex in self.vertices:
-            sampling_pool.append(vertex.collection_index)
-
-        # Sample the desired number of indices from the sampling pool
-        sampled_indices = random.sample(sampling_pool, num_samples)
-        uniform_samples_value = []
-        for index in sampled_indices:
-            uniform_samples_value.append(self.vertices[index])
-        self.uniform_samples[key] = uniform_samples_value
-        self.uniform_counter += 1
 
     def findIntrinsicSymmetricPoints(self, uniform_sample_key):
         '''
@@ -235,8 +196,9 @@ class MeshGraph:
                     queue.put(neighbor_vertex)
                     visited[neighbor_vertex.collection_index] = True
                     parent[neighbor_vertex.collection_index] = current_vertex
-                    calc_distance = distance_list[current_vertex.collection_index] + self.euclidianDistance(current_vertex, neighbor_vertex) 
-                    if( calc_distance < distance_list[neighbor_vertex.collection_index] ):
+                    calc_distance = distance_list[current_vertex.collection_index] + self.euclidianDistance(
+                        current_vertex, neighbor_vertex)
+                    if (calc_distance < distance_list[neighbor_vertex.collection_index]):
                         distance_list[neighbor_vertex.collection_index] = calc_distance
 
         # If no path is found, return an empty list
@@ -257,49 +219,54 @@ class MeshGraph:
             str_return += str(j) + "\n"
 
         return str_return
-    
+
     def _readModifiedFile(self, filePath):
         with open(filePath, "r") as meshFile:
 
             meshLines = meshFile.readlines()
-            meshInfo =  meshLines[1]
-            self.n_vertices, self.n_faces, self.n_edges = meshInfo.split(sep=" ")
 
             face_index = 0
             # vertices and faces
             for vertice_index, meshLine in enumerate(meshLines[2:]):
 
-                meshInfo = list (map(float,  meshLine[:-1].split(sep=" ") ))
+                meshInfo = list(map(float, meshLine[:-1].split(sep=" ")))
 
                 # vertice
                 if (len(meshInfo) == 7):
-                    if(meshInfo[4:] == [255,0,0]):
+                    if (meshInfo[4:] == [255, 0, 0]):
                         self.com.append(meshInfo[1:4])
                     else:
                         self.evenly_sampled_points.append(meshInfo[1:4])
+
+    def readSamplesFromFile(self, file_path):
+        with open(file_path, 'r') as file:
+            for line in file:
+                sample = int(line.strip())
+                self.samples.append(sample)
 
     def writeFileSplit(self):
         with open("split.off", "w") as file:
             file.write("OFF\n")
             file.write("12500 24998 37497\n")
 
-            for index in range(self.number_of_vertices):
+            for index in range(self.n_vertices):
                 vertex = self.vertices[index]
-                file.write(str(vertex.x) + " " + str(vertex.y) +" " + str(vertex.z) + "\n")
-            
-            for index in range(self.number_of_faces):
+                file.write(str(vertex.x) + " " + str(vertex.y) + " " + str(vertex.z) + "\n")
+
+            for index in range(self.n_faces):
                 face = self.faces[index]
-                vertex = face.vertice_1
+                vertex = face.vertex_1
 
                 if (face.color != None):
                     center_point = self.vertices[int(self.com[0][0])]
                     if (vertex.z > center_point.z):
-                        face.color = [172,42,44]
-                file.write("3 "+ str(face.vertice_1.collection_index)+ " " + str(face.vertice_2.collection_index) + " " + str(face.vertice_3.collection_index))
+                        face.color = [172, 42, 44]
+                file.write(
+                    "3 " + str(face.vertex_1.collection_index) + " " + str(face.vertex_2.collection_index) + " " + str(
+                        face.vertex_3.collection_index))
                 if (face.color):
-                    file.write(" " + str(face.color[0])+ " " + str(face.color[1]) +" " +str(face.color[2]) + " ")
+                    file.write(" " + str(face.color[0]) + " " + str(face.color[1]) + " " + str(face.color[2]) + " ")
                 file.write("\n")
-
 
     def _readFromFile(self, filePath):
 
@@ -308,7 +275,10 @@ class MeshGraph:
             meshLines = meshFile.readlines()
             meshInfo = meshLines[1]
 
-            self.n_vertices, self.n_faces, self.n_edges = meshInfo.split(sep=" ")
+            self.n_vertices, self.n_faces, self.n_edges = [int(i) for i in meshInfo.split(sep=" ")]
+            print(self.n_vertices)
+            print(type(self.n_vertices))
+            print([int(i) for i in meshInfo.split(sep=" ")])
 
             face_index = 0
             # vertices and faces
@@ -323,28 +293,25 @@ class MeshGraph:
                     self.vertices.insert(vertice_index, vertice)
 
                 else:
-                    n_index = int(meshInfo[0])
-                    vertice_index_lst = [int(i) for i in meshInfo[1:]]
+                    vertex_index_lst = [int(i) for i in meshInfo[1:]]
 
-                    vertice_1 = self.vertices[vertice_index_lst[0]]
-                    vertice_2 = self.vertices[vertice_index_lst[1]]
-                    vertice_3 = self.vertices[vertice_index_lst[2]]
+                    vertex_1 = self.vertices[vertex_index_lst[0]]
+                    vertex_2 = self.vertices[vertex_index_lst[1]]
+                    vertex_3 = self.vertices[vertex_index_lst[2]]
                     color = None
-                    if(len(meshInfo) == 7):
-                        color = vertice_index_lst[3:]
+                    if len(meshInfo) == 7 and self.withColor:
+                        color = vertex_index_lst[3:]
 
-
-                    face = Face(vertice_1, vertice_2, vertice_3, face_index)
-
-                    vertice_1.addInvolvedFace(face)
-                    vertice_2.addInvolvedFace(face)
-                    vertice_3.addInvolvedFace(face)
-
-                        
+                    face = Face(vertex_1, vertex_2, vertex_3, face_index)
+                    face.color = color
+                    vertex_1.addInvolvedFace(face)
+                    vertex_2.addInvolvedFace(face)
+                    vertex_3.addInvolvedFace(face)
 
                     self.faces.insert(face_index, face)
 
                     face_index += 1
+
     def meshToFile(self, fileName):
         last_string = (
             'OFF\n'
@@ -355,7 +322,8 @@ class MeshGraph:
             added_str = f'{vertex.x} {vertex.y} {vertex.z}\n'
             last_string += added_str
         for face in self.faces:
-            added_str = (f'3 {face.vertice_1.collection_index} {face.vertice_2.collection_index} {face.vertice_3.collection_index}')
+            added_str = (
+                f'3 {face.vertex_1.collection_index} {face.vertex_2.collection_index} {face.vertex_3.collection_index}')
             if face.color != None:
                 added_str += f' {int(face.color[0])} {int(face.color[1])} ' \
                              f'{int(face.color[2])}\n'
@@ -369,24 +337,23 @@ class MeshGraph:
 
     def brushPair(self, pairs):
         for pair in pairs:
-            v1,v2 = self.vertices[pair[0]],self.vertices[ pair[1]]
-            color = (random.randint(0,128), random.randint(128,256), random.randint(0,256))
+            v1, v2 = self.vertices[pair[0]], self.vertices[pair[1]]
+            color = (random.randint(0, 128), random.randint(128, 256), random.randint(0, 256))
             for face in v1.involved_faces:
-                face.color = color            
+                face.color = color
             for face in v2.involved_faces:
                 face.color = color
 
-            
     def get_neighbor_indices(self, vertex):
 
         neighbor_indices = []
         for face in vertex.involved_faces:
-            if face.vertice_1.collection_index != vertex.collection_index:
-                neighbor_indices.append(face.vertice_1)
-            if face.vertice_2.collection_index != vertex.collection_index:
-                neighbor_indices.append(face.vertice_2)
-            if face.vertice_3.collection_index != vertex.collection_index:
-                neighbor_indices.append(face.vertice_3)
+            if face.vertex_1.collection_index != vertex.collection_index:
+                neighbor_indices.append(face.vertex_1)
+            if face.vertex_2.collection_index != vertex.collection_index:
+                neighbor_indices.append(face.vertex_2)
+            if face.vertex_3.collection_index != vertex.collection_index:
+                neighbor_indices.append(face.vertex_3)
 
         return neighbor_indices
 
