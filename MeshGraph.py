@@ -3,6 +3,12 @@ import random
 import math
 from queue import Queue
 
+print_flag = 0
+
+
+def tprint(string):
+    if print_flag: print(string)
+
 
 def compare_with_margin(value1, value2, margin_percentage):
     margin = margin_percentage / 100 * value1
@@ -11,11 +17,13 @@ def compare_with_margin(value1, value2, margin_percentage):
 
 
 class Vertex:
+    involved_faces = []
+    involved_edges = []
+    neighbor_vertices = []
 
     def __init__(self, x, y, z, index):
         self.x, self.y, self.z = x, y, z
         self.collection_index = index
-        self.involved_faces = []
 
     def __str__(self):
         str_return = f"""
@@ -27,119 +35,186 @@ class Vertex:
 
         return str_return
 
+    def getIndex(self):
+        return self.collection_index
+
     def addInvolvedFace(self, face):
-        self.involved_faces.append(face)
+        if face not in self.involved_faces:
+            self.involved_faces.append(face)
+        else:
+            return False
+
+    def addInvolvedEdges(self, edge):
+        if edge not in self.involved_edges:
+            self.involved_edges.append(edge)
+        else:
+            return False
+
+    def addNeighborVertex(self, vertex):
+        if vertex not in self.neighbor_vertices:
+            self.neighbor_vertices.append(vertex)
+        else:
+            return False
+
+    def getInvolvedFaces(self):
+        return self.involved_faces
+
+    def getInvolvedEdges(self):
+        return self.involved_edges
+
+    def getNeighborVertices(self):
+        return self.neighbor_vertices
+
+    @staticmethod
+    def vertexDistance(vertex_1, vertex_2):
+        x_diff = abs(vertex_1.x - vertex_2.x)
+        y_diff = abs(vertex_1.y - vertex_2.y)
+        z_diff = abs(vertex_1.z - vertex_2.z)
+        return math.sqrt(math.pow(x_diff, 2) + math.pow(y_diff, 2) + math.pow(z_diff, 2))
 
 
-class Face:
-    def __init__(self, vertice_1, vertice_2, vertice_3, index, color):
-        self.vertice_1 = vertice_1
-        self.vertice_2 = vertice_2
-        self.vertice_3 = vertice_3
-        self.collection_index = index
-        self.neighbour12 = None
-        self.neighbour13 = None
-        self.neighbour23 = None
-        self.color = color
+class Edge:
+    involved_faces_pair = []
+
+    def __init__(self, vertex_1, vertex_2, key):
+        self.key = key
+        self.vertex_pair = (vertex_1, vertex_2)
+        self.length = Vertex.vertexDistance(vertex_1, vertex_2)
 
     def __str__(self):
         str_return = f"""
-            FACE_INDEX:{self.collection_index}\n\n
-            vertice_1:\n    {self.vertice_1} 
-            vertice_2:\n    {self.vertice_2} 
-            vertice_3:\n    {self.vertice_3} 
+            EDGE:\n
+            vertice_1:\n    {self.vertex_pair[0]} 
+            vertice_2:\n    {self.vertex_pair[1]} 
+            \n 
+        """
+        return str_return
+
+    def addInvolvedFace(self, face):
+        length = len(self.involved_faces_pair)
+        if length == 0:
+            self.involved_faces_pair.append(face)
+        elif length == 1:
+            self.involved_faces_pair.append(face)
+            self.involved_faces_pair = tuple(self.involved_faces_pair)
+
+
+    def getVertices(self): return self.vertex_pair
+
+    def getVertex_0(self): return self.vertex_pair[0]
+
+    def getVertex_1(self): return self.vertex_pair[1]
+
+    def getLength(self): return self.length
+
+    def getKey(self): return self.key
+
+    def getInvolvedFacesPair(self):
+        return self.involved_faces_pair
+
+
+class Face:
+    neighbor_faces_triple = []
+    edge_triple = []
+    color = (0, 0, 0)
+
+    def __init__(self, vertex_1, vertex_2, vertex_3, key):
+        self.key = key
+        self.vertex_triple = (vertex_1, vertex_2, vertex_3)
+
+    def __str__(self):
+        str_return = f"""
+            FACE:\n\n
+            vertice_1:\n    {self.getVertex_0()} 
+            vertice_2:\n    {self.getVertex_1()} 
+            vertice_3:\n    {self.getVertex_2()} 
             color:\n    {self.color}
         """
         return str_return
 
-    def toTuple(self):
-        return self.vertice_1.index, self.vertice_2.index, self.vertice_3.index
+    def addNeighborFace(self, face):
+        self.neighbor_faces_triple.append(face)
+        if len(self.neighbor_faces_triple) == 3:
+            self.neighbor_faces_triple = tuple(self.neighbor_faces_triple)
+    def getNeigborFaces(self): return self.neighbor_faces_triple
 
+    def getVertices(self): return self.vertex_triple
+
+    def getVertex_0(self): return self.vertex_triple[0]
+
+    def getVertex_1(self): return self.vertex_triple[1]
+
+    def getVertex_2(self): return self.vertex_triple[2]
+
+    def getEdges(self): return self.edge_triple
+
+    def setEdges(self, edges):
+        self.edge_triple = (edges[0], edges[1], edges[2])
+
+    def getKey(self): return self.key
+
+    def setColor(self, color): self.color = color
 
 class MeshGraph:
+    vertices = []
+    faces = {}
+    edges = {}
 
     def __init__(self, filePath):
         self.filePath = filePath
-        self.uniform_samples = {}
-        self.uniform_counter = 0
-        self.vertices = []
-        self.faces = []
+        print("starting reading of file...")
         self._readFromFile(filePath)
         self.number_of_vertices = len(self.vertices)
         self.number_of_faces = len(self.faces)
-        self.center_of_mass = self.calculateCenterOfMass()
-        self.center_vertex = self.calculateCenterVertex()
-        #self.input1 =  
-        #self.input2
-        #LATER ADDITIONS
+
+        # LATER ADDITIONS
+        print("starting later additions...")
         self.distances_1 = [math.inf] * self.number_of_vertices
         self.distances_2 = [math.inf] * self.number_of_vertices
         self.evenly_sampled_points = []
-        self.com = []
-        self._readModifiedFile(filePath)
         self.right_samples_indices = []
         self.left_samples_indices = []
         self.samples = []
-        self.middle_vertex = self.vertices[int(self.com[0][0])]
-        self.readSamplesFromFile("sampled_1.txt")
+        self._readSamplesFromFile("sampled_1.txt")
 
-        self.splitSamples()
+    def getVertices(self):
+        return self.vertices
 
-    def readSamplesFromFile(self,file_path):
+    def getFaces(self):
+        return list(self.faces.values())
+
+    def getEdges(self):
+        return list(self.edges.values())
+
+    def _readSamplesFromFile(self, file_path):
         with open(file_path, 'r') as file:
             for line in file:
                 sample = int(line.strip())
                 self.samples.append(sample)
-        
-    def splitSamples(self):
-        self.left_samples_indices = [sample for sample in self.samples if self.vertices[sample].z < self.center_of_mass[2]]
-        self.right_samples_indices = [sample for sample in self.samples if self.vertices[sample].z > self.center_of_mass[2]]
 
-    def calculateCenterVertex(self):
-        min_dist = math.inf
-        min_vertex_index = None
-        for index_vertex, vertex in enumerate(self.vertices):
-            sum_sqr = math.pow(vertex.x - self.center_of_mass[0], 2)\
-                      + math.pow(vertex.y - self.center_of_mass[1],2)\
-                      + math.pow(vertex.z - self.center_of_mass[2], 2)
-            dist = math.sqrt(sum_sqr)
-            if dist < min_dist:
-                min_dist = dist
-                min_vertex_index = index_vertex
+    def splitSamples(self, split_points):
+        return
 
-        return min_vertex_index
-
-    def calculateCenterOfMass(self):
-
-        sum_x = 0
-        sum_y = 0
-        sum_z = 0
-        for vertex in self.vertices:
-            sum_x += vertex.x
-            sum_y += vertex.y
-            sum_z += vertex.z
-
-        avr_x = sum_x / self.number_of_vertices
-        avr_y = sum_y / self.number_of_vertices
-        avr_z = sum_z / self.number_of_vertices
-
-        return avr_x, avr_y, avr_z
+    # self.left_samples_indices = [sample for sample in self.samples if
+    #                              self.vertices[sample].z < self.center_of_mass[2]]
+    # self.right_samples_indices = [sample for sample in self.samples if
+    #                               self.vertices[sample].z > self.center_of_mass[2]]
 
     def uniform_sampling(self, num_samples, key):
-        # Create a sampling pool
-        sampling_pool = []
+        return
 
-        # Add indices of all faces to the sampling pool
-        for vertex in self.vertices:
-            sampling_pool.append(vertex.collection_index)
-
-        # Sample the desired number of indices from the sampling pool
-        sampled_indices = random.sample(sampling_pool, num_samples)
-        uniform_samples_value = []
-        for index in sampled_indices:
-            uniform_samples_value.append(self.vertices[index])
-        self.uniform_samples[key] = uniform_samples_value
-        self.uniform_counter += 1
+    # # Create a sampling pool
+    # sampling_pool = []
+    #
+    # # Add indices of all faces to the sampling pool
+    # for vertex in self.vertices:
+    #     sampling_pool.append(vertex.collection_index)
+    #
+    # # Sample the desired number of indices from the sampling pool
+    # sampled_indices = random.sample(sampling_pool, num_samples)
+    # uniform_samples_value = []
+    # for index in sampled_indices:
+    #     uniform_samples_value.append(self.vertices[index])
 
     def findIntrinsicSymmetricPoints(self, uniform_sample_key):
         '''
@@ -173,9 +248,6 @@ class MeshGraph:
         print(f"Intrinsic Symmetry loop counter: {counter}")
         return pairs
 
-    def euclidianDistance(self, vertex1, vertex2):
-        return math.sqrt((vertex1.x - vertex2.x) ** 2 + (vertex1.y - vertex2.y) ** 2 + (vertex1.z - vertex2.z) ** 2)
-
     def shortestPath(self, from_vertex, distance_list):
         # Create a visited array to keep track of visited vertices
         visited = [False] * len(self.vertices)
@@ -200,53 +272,18 @@ class MeshGraph:
                 return path
         '''
             # Explore the neighboring vertices
-            for neighbor_vertex in self.get_neighbor_indices(current_vertex):
+            for neighbor_vertex in current_vertex.getNeighborVertices():
                 if not visited[neighbor_vertex.collection_index]:
                     queue.put(neighbor_vertex)
                     visited[neighbor_vertex.collection_index] = True
                     parent[neighbor_vertex.collection_index] = current_vertex
-                    calc_distance = distance_list[current_vertex.collection_index] + self.euclidianDistance(current_vertex, neighbor_vertex) 
-                    if( calc_distance < distance_list[neighbor_vertex.collection_index] ):
+                    calc_distance = distance_list[current_vertex.collection_index] + \
+                                    Vertex.vertexDistance(current_vertex, neighbor_vertex)
+                    if calc_distance < distance_list[neighbor_vertex.collection_index]:
                         distance_list[neighbor_vertex.collection_index] = calc_distance
 
         # If no path is found, return an empty list
         return []
-
-    def toString(self, head=False):
-        str_return = str()
-        str_return += "vertices\n"
-
-        vertices = self.vertices[:5] if head else self.vertices
-        faces = self.faces[:5] if head else self.faces
-        for i in vertices:
-            str_return += str(type(i)) + "\n"
-            str_return += str(i) + "\n"
-        str_return += "faces\n"
-        for j in faces:
-            str_return += str(type(j)) + "\n"
-            str_return += str(j) + "\n"
-
-        return str_return
-    
-    def _readModifiedFile(self, filePath):
-        with open(filePath, "r") as meshFile:
-
-            meshLines = meshFile.readlines()
-            meshInfo =  meshLines[1]
-            self.n_vertices, self.n_faces, self.n_edges = meshInfo.split(sep=" ")
-
-            face_index = 0
-            # vertices and faces
-            for vertice_index, meshLine in enumerate(meshLines[2:]):
-
-                meshInfo = list (map(float,  meshLine[:-1].split(sep=" ") ))
-
-                # vertice
-                if (len(meshInfo) == 7):
-                    if(meshInfo[4:] == [255,0,0]):
-                        self.com.append(meshInfo[1:4])
-                    else:
-                        self.evenly_sampled_points.append(meshInfo[1:4])
 
     def writeFileSplit(self):
         with open("split.off", "w") as file:
@@ -255,8 +292,8 @@ class MeshGraph:
 
             for index in range(self.number_of_vertices):
                 vertex = self.vertices[index]
-                file.write(str(vertex.x) + " " + str(vertex.y) +" " + str(vertex.z) + "\n")
-            
+                file.write(str(vertex.x) + " " + str(vertex.y) + " " + str(vertex.z) + "\n")
+
             for index in range(self.number_of_faces):
                 face = self.faces[index]
                 vertex = face.vertice_1
@@ -264,70 +301,127 @@ class MeshGraph:
                 if (face.color != None):
                     center_point = self.vertices[int(self.com[0][0])]
                     if (vertex.z > center_point.z):
-                        face.color = [172,42,44]
-                file.write("3 "+ str(face.vertice_1.collection_index)+ " " + str(face.vertice_2.collection_index) + " " + str(face.vertice_3.collection_index))
+                        face.color = [172, 42, 44]
+                file.write("3 " + str(face.vertice_1.collection_index) + " " + str(
+                    face.vertice_2.collection_index) + " " + str(face.vertice_3.collection_index))
                 if (face.color):
-                    file.write(" " + str(face.color[0])+ " " + str(face.color[1]) +" " +str(face.color[2]) + " ")
+                    file.write(" " + str(face.color[0]) + " " + str(face.color[1]) + " " + str(face.color[2]) + " ")
                 file.write("\n")
-
 
     def _readFromFile(self, filePath):
 
         with open(filePath, "r") as meshFile:
+            mesh_lines = meshFile.readlines()
 
-            meshLines = meshFile.readlines()
-            meshInfo = meshLines[1]
+        mesh_info = mesh_lines[1]
 
-            self.n_vertices, self.n_faces, self.n_edges = meshInfo.split(sep=" ")
+        self.n_vertices, self.n_faces, self.n_edges = mesh_info.split(sep=" ")
 
-            face_index = 0
-            # vertices and faces
-            for vertice_index, meshLine in enumerate(meshLines[2:]):
+        # vertices and faces
+        for vertex_index, meshLine in enumerate(mesh_lines[2:]):
 
-                meshInfo = meshLine[:-1].split(sep=" ")
+            meshInfo = meshLine[:-1].split(sep=" ")
 
-                # vertice
-                if (len(meshInfo) == 3):
-                    meshInfo = [float(i) for i in meshInfo]
-                    vertice = Vertex(meshInfo[0], meshInfo[1], meshInfo[2], vertice_index)
-                    self.vertices.insert(vertice_index, vertice)
-
-                else:
-                    n_index = int(meshInfo[0])
-                    vertice_index_lst = [int(i) for i in meshInfo[1:]]
-
-                    vertice_1 = self.vertices[vertice_index_lst[0]]
-                    vertice_2 = self.vertices[vertice_index_lst[1]]
-                    vertice_3 = self.vertices[vertice_index_lst[2]]
-                    color = None
-                    if(len(meshInfo) == 7):
-                        color = vertice_index_lst[3:]
+            # vertice
+            if len(meshInfo) == 3:
+                self._add_vertice_from_meshInfo(meshInfo, vertex_index)
+            
+            # face and edges
+            elif len(meshInfo) == 4:
+                self._add_face_edge_and_other_op(meshInfo)
 
 
-                    face = Face(vertice_1, vertice_2, vertice_3, face_index, color)
+    def _add_face_edge_and_other_op(self, meshInfo):
 
-                    vertice_1.addInvolvedFace(face)
-                    vertice_2.addInvolvedFace(face)
-                    vertice_3.addInvolvedFace(face)
+        vertex_index_lst = [int(i) for i in meshInfo[1:]]
 
-                        
+        vertex_1 = self.vertices[vertex_index_lst[0]]
+        vertex_2 = self.vertices[vertex_index_lst[1]]
+        vertex_3 = self.vertices[vertex_index_lst[2]]
 
-                    self.faces.insert(face_index, face)
+        # edges created and added
+        edge12 = self.add_edge(vertex_1, vertex_2)
+        vertex_1.addNeighborVertex(vertex_2)
+        vertex_2.addNeighborVertex(vertex_1)
 
-                    face_index += 1
+        edge13 = self.add_edge(vertex_1, vertex_3)
+        vertex_1.addNeighborVertex(vertex_3)
+        vertex_3.addNeighborVertex(vertex_1)
 
-    def get_neighbor_indices(self, vertex):
+        edge23 = self.add_edge(vertex_2, vertex_3)
+        vertex_2.addNeighborVertex(vertex_3)
+        vertex_3.addNeighborVertex(vertex_2)
 
-        neighbor_indices = []
-        for face in vertex.involved_faces:
-            if face.vertice_1.collection_index != vertex.collection_index:
-                neighbor_indices.append(face.vertice_1)
-            if face.vertice_2.collection_index != vertex.collection_index:
-                neighbor_indices.append(face.vertice_2)
-            if face.vertice_3.collection_index != vertex.collection_index:
-                neighbor_indices.append(face.vertice_3)
+        # face created and added
+        face = self.add_face(vertex_1, vertex_2, vertex_3)
+        # add edges to face
+        face.setEdges((edge12, edge13, edge23))
+        # add face to edge
+        edge12.addInvolvedFace(face)
+        edge13.addInvolvedFace(face)
+        edge23.addInvolvedFace(face)
 
-        return neighbor_indices
+        # add edges and face to vertex
+        vertex_1.addInvolvedEdges(edge12)
+        vertex_1.addInvolvedEdges(edge13)
+        vertex_1.addInvolvedFace(face)
+
+        vertex_2.addInvolvedEdges(edge12)
+        vertex_2.addInvolvedEdges(edge23)
+        vertex_2.addInvolvedFace(face)
+
+        vertex_3.addInvolvedEdges(edge13)
+        vertex_3.addInvolvedEdges(edge23)
+        vertex_3.addInvolvedFace(face)
+
+
+    def _add_vertice_from_meshInfo(self, meshInfo, vertex_index):
+        meshInfo = [float(i) for i in meshInfo]
+        vertex = Vertex(meshInfo[0], meshInfo[1], meshInfo[2], vertex_index)
+        self.vertices.insert(vertex_index, vertex)
+
+    # key = index_1 - index_2 - index_3 for face ----- index_1 - index_2 for edge
+    def get_face_key(self, vertex_1, vertex_2, vertex_3):
+        vertex_indices = list(sorted([vertex_1.collection_index, vertex_2.collection_index, vertex_3.collection_index]))
+        key = '-'.join(map(str, vertex_indices))
+        return key
+
+    def add_face(self, vertex_1, vertex_2, vertex_3):
+        key = self.get_face_key(vertex_1, vertex_2, vertex_3)
+        if key not in self.faces:
+            face = Face(vertex_1, vertex_2, vertex_3, key)
+            self.faces[key] = face
+            return face
+        return False
+        # Perform any additional operations you need for adding a face
+
+    def get_edge_key(self, vertex_1, vertex_2):
+        index1 = vertex_1.collection_index
+        index2 = vertex_2.collection_index
+        key = f"{min(index1, index2)}-{max(index1, index2)}"
+        return key
+
+    def add_edge(self, vertex_1, vertex_2):
+        key = self.get_edge_key(vertex_1, vertex_2)
+        if key not in self.edges:
+            tprint("edge_add")
+            edge = Edge(vertex_1, vertex_2, key)
+            self.edges[key] = edge
+            return edge
+        return self.edges[key]
+        # Perform any additional operations you need for adding an edge
+
+    def getEdgeWithVertices(self, vertex_1, vertex_2):
+        key = self.get_edge_key(vertex_1, vertex_2)
+        if key in self.edges:
+            return self.edges[key]
+        return False
+
+    def getFaceWithVertices(self, vertex_1, vertex_2, vertex_3):
+        key = self.get_face_key(vertex_1, vertex_2, vertex_3)
+        if key in self.faces:
+            return self.faces[key]
+        return False
 
     def setColorVertices(self, lst_vertices):
 
@@ -340,10 +434,6 @@ class MeshGraph:
 
             mesh_vertices = [i for i in mesh_lines if len(i.split(" ")) == 3]
             mesh_faces = [i for i in mesh_lines if len(i.split(" ")) == 4]
-
-            print(mesh_lines)
-            print(mesh_vertices)
-            print(mesh_faces)
 
             for vertex in lst_vertices:
                 faces = vertex.involved_faces

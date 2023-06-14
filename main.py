@@ -12,23 +12,38 @@ import sys
 #     x = nature.iterateOneGeneration()
 
 
+def printForMesh(mesh):
+    print("Vertices")
+    print(mesh.getVertices()[:5])
+    print(len(mesh.getVertices()))
+
+    print("Edges")
+    print(mesh.getEdges()[:5])
+    print(len(mesh.getEdges()))
+
+    print("Faces")
+    print(mesh.getFaces()[:5])
+    print(len(mesh.getFaces()))
+
+    print("Face[0] neighbors")
+    x = mesh.getFaces()
+
+    for index, face in enumerate(x):
+        print(f"NEIGHBOR FACES OF FACE-{index}")
+        if len(face.neighbor_faces_triple) != 3:
+            print(f"ERROR - {len(face.neighbor_faces_triple)}")
+            break
+    print("FINISH")
+
 
 def main():
 
     # Example usage
-    fileName = sys.argv[1]
+    fileName = "1.off"
     mesh = MeshGraph(fileName)
-    center_point = mesh.vertices[int(mesh.com[0][0])]
-    print(center_point.x, center_point.y, center_point.z)
-    #sample_point = mesh.vertices[7000]
-    #print(sample_point)
-    print(mesh.vertices[int(mesh.com[0][2])])
-    mesh.shortestPath( center_point, mesh.distances_1)
-    mesh.writeFileSplit()
-    print(mesh.distances_1[mesh.vertices[int(mesh.com[0][2])].collection_index])
-    print(len(mesh.right_samples_indices))
-    print(mesh.right_samples_indices)
-    print(mesh.left_samples_indices)
+    printForMesh(mesh)
+
+
 
     #ga = GA(vertices=mesh.vertices, faces=mesh.faces,right_samples=mesh.right_samples_indices, left_samples=mesh.left_samples_indices)
     # Assuming vertices and faces are populated with the required data
@@ -41,4 +56,6 @@ def main():
 
 
 main()
+
+
 
