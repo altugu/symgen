@@ -22,6 +22,7 @@ def main():
     fileName = "1.off"
     input = (5158,11573)
     mesh = MeshGraph(fileName, input)
+    print(mesh.input1_vertex, mesh.input2_vertex)
     error_functions = [
         GA.squared_error,
         GA.absolute_error,
@@ -39,6 +40,7 @@ def main():
                 tester=tester
                 )
         pairs = ga.getPairs()
+        print(len(pairs))
         mesh.brushPair(pairs)
         mesh.meshToFile(f"1_{error_function.__name__}.off")
 
