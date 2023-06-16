@@ -78,6 +78,7 @@ class MeshGraph:
     def __init__(self, filePath, input, withColor=False):
         self.withColor = withColor
         self.filePath = filePath
+        self.fileFirstLine = None
         self._readFromFile(filePath)
 
         # LATER ADDITIONS
@@ -274,7 +275,6 @@ class MeshGraph:
 
             meshLines = meshFile.readlines()
             meshInfo = meshLines[1]
-
             self.n_vertices, self.n_faces, self.n_edges = [int(i) for i in meshInfo.split(sep=" ")]
             print(self.n_vertices)
             print(type(self.n_vertices))
@@ -313,9 +313,10 @@ class MeshGraph:
                     face_index += 1
 
     def meshToFile(self, fileName):
+        
         last_string = (
             'OFF\n'
-            '12500 24998 0\n'
+            f'{self.n_vertices} {self.n_faces} {self.n_edges}\n'
         )
 
         for vertex in self.vertices:

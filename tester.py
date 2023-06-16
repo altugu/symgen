@@ -42,25 +42,26 @@ class Tester:
                          ))
             plt.grid(True)
             
-            self.rootPath = "models/mesh023.off"
+            
 
-            directory = os.path.basename(self.rootPath)
+          #  directory = os.path.basename(self.rootPath)
+#
+          #  save_directory = f"test_results/{directory[:-4]}"
+#
+          #  if not os.path.exists(save_directory):
+          #      print("Path does not exist. Creating one...")
+          #      os.makedirs(save_directory)
+#
+          #  save_file_path = os.path.join(save_directory, f"{index}.png")
+#
+          #  if not os.path.exists(save_file_path):
+          #      print("File does not exist. Creating one...")
+          #      with open(save_file_path, 'w+') as file:
+          #          pass  # Create an empty file
 
-            save_directory = f"test_results/{directory[:-4]}"
-
-            if not os.path.exists(save_directory):
-                print("Path does not exist. Creating one...")
-                os.makedirs(save_directory)
-
-            save_file_path = os.path.join(save_directory, f"{index}.png")
-
-            if not os.path.exists(save_file_path):
-                print("File does not exist. Creating one...")
-                with open(save_file_path, 'w+') as file:
-                    pass  # Create an empty file
-
+            save_directory = f"{self.rootPath}_{index}.png"
             plt.savefig(save_directory)
-            #plt.show()
+            plt.show()
 
 
 class Test:

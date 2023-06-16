@@ -76,7 +76,8 @@ def main():
                     )
             pairs = ga.getPairs()
             mesh.brushPair(pairs)
-            mesh.meshToFile(f"1_{error_function.__name__}.off")
+            
+            mesh.meshToFile(f"{os.path.basename(mesh.filePath)}_{error_function.__name__}.off")
 
     tester.show_results()
 
